@@ -68,8 +68,10 @@
   <div>
     <label>名前1の画数</label>
     <input id="name1" type="number" min="1" max="50" placeholder="例: 8">
-    <label>名前2の最大画数</label>
-    <input id="maxName2" type="number" min="1" max="50" value="20">
+    <input id="kanji1" type="text" maxlength="1" class="kanji-input">
+
+    <!-- <label>名前2の最大画数</label>
+    <input id="maxName2" type="number" min="1" max="50" value="20"> -->
     <button id="calc">運勢を表示</button>
   </div>
 
@@ -151,6 +153,24 @@
 
     const tbody = document.querySelector("#resultTable tbody");
 
+    async function fetchStrokes(kanji,idDisp,idApply) {
+        const k=kanji.trim();
+        if(k.length!==1){document.getElementById(idDisp).textContent="";return;}
+        try{
+            const res=await fetch(`https://kanjiapi.dev/v1/kanji/${encodeURIComponent(k)}`);
+            if(!res.ok) throw new Error();
+            const data=await res.json();
+            // document.getElementById(idDisp).textContent=`(${data.stroke_count}画)`;
+            if (idApply) {
+                document.getElementById(idApply).value=data.stroke_count;
+            }
+        }catch{
+            if (idDisp) {
+                document.getElementById(idDisp).textContent="取得失敗";
+            }
+        }
+    }
+
     const render = (data) => {
       tbody.innerHTML = "";
       data.forEach(d => {
@@ -185,9 +205,11 @@
       });
     };
 
+    document.getElementById("kanji1").addEventListener("input",(e)=>fetchStrokes(e.target.value,"stroke1","name1"));
     document.getElementById("calc").addEventListener("click", () => {
       const name1 = parseInt(document.getElementById("name1").value);
-      const max = parseInt(document.getElementById("maxName2").value);
+    //   const max = parseInt(document.getElementById("maxName2").value);
+      const max =  20; // parseInt(document.getElementById("maxName2").value);
       if (!name1 || !max) return;
       const results = [];
       for (let name2 = 1; name2 <= max; name2++) {
