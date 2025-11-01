@@ -1,40 +1,197 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>姓名判断簡易計算ツール</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>姓名判断シミュレーター</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 16px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.2rem;
+      margin-bottom: 12px;
+    }
+    label {
+      display: block;
+      margin: 8px 0 4px;
+      font-size: 0.9rem;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 8px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      margin-bottom: 8px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+    button:active {
+      background: #0056b3;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.85rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      text-align: center;
+      padding: 6px;
+    }
+    tr.clickable {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      transition: background 0.2s;
+    }
+    tr.clickable:hover {
+      background: #eef;
+    }
+    tr.good { background: #d8f5d0; }
+    tr.ok { background: #fff3cd; }
+    tr.bad { background: #f8d7da; }
+  </style>
 </head>
 <body>
-<h1>姓名判断簡易計算ツール</h1>
+  <h1>姓名判断シミュレーター</h1>
 
-<section>
-  <h2>① 名前1・2を指定して運勢を表示</h2>
-  <div class="input-group">
-    <label>名前1画数</label>
-    <input type="number" id="name1" min="1" max="50" inputmode="numeric">
+  <div>
+    <label>名前1の画数</label>
+    <input id="name1" type="number" min="1" max="50" placeholder="例: 8">
+    <label>名前2の最大画数</label>
+    <input id="maxName2" type="number" min="1" max="50" value="20">
+    <button id="calc">運勢を表示</button>
   </div>
-  <div class="input-group">
-    <label>名前2画数</label>
-    <input type="number" id="name2" min="1" max="50" inputmode="numeric">
-  </div>
-  <button id="btn1">運勢を表示</button>
-  <div id="result1"></div>
-</section>
 
-<hr>
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>名前2画数</th>
+        <th>天格</th>
+        <th>人格</th>
+        <th>地格</th>
+        <th>外格</th>
+        <th>総格</th>
+        <th>三才</th>
+        <th>家庭運</th>
+        <th>仕事運</th>
+        <th>総合評価</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-<section>
-  <h2>② 名前1を指定して全候補(1〜20画)を表示</h2>
-  <div class="input-group">
-    <label>名前1画数</label>
-    <input type="number" id="name1_search" min="1" max="50" inputmode="numeric">
-  </div>
-  <button id="btn2">一覧を表示</button>
-  <div id="result2"></div>
-</section>
+  <script>
+    // 苗字固定（9画, 7画）
+    const lastName1 = 9;
+    const lastName2 = 7;
 
-<script src="script.js"></script>
+    // 画数吉凶表
+    const fortuneTable = {
+      1:"◎",2:"△",3:"◎",4:"△",5:"◎",6:"◎",7:"◎",8:"◎",9:"△",10:"△",11:"◎",12:"△",13:"◎",
+      14:"△",15:"◎",16:"◎",17:"◎",18:"◎",19:"△",20:"△",21:"◎",22:"△",23:"◎",24:"◎",25:"◎",
+      26:"△",27:"○",28:"△",29:"○",30:"△",31:"◎",32:"◎",33:"◎",34:"△",35:"◎",36:"○",37:"◎",
+      38:"○",39:"◎",40:"△",41:"◎",42:"○",43:"△",44:"△",45:"◎",46:"△",47:"◎",48:"◎",49:"△",50:"○"
+    };
+
+    // 五行（三才判定用）
+    const fiveElement = n => ["木","木","火","火","土","土","金","金","水","水"][n % 10 || 0];
+
+    // 三才判定表（土固定）
+    const sanSaiTable = {
+      "土木木":"○","土木火":"○","土木土":"△","土木金":"△","土木水":"△",
+      "土火木":"◎","土火火":"○","土火土":"◎","土火金":"△","土火水":"△",
+      "土土木":"△","土土火":"◎","土土土":"◎","土土金":"◎","土土水":"△",
+      "土金木":"△","土金火":"△","土金土":"◎","土金金":"◎","土金水":"△",
+      "土水木":"△","土水火":"△","土水土":"△","土水金":"△","土水水":"△"
+    };
+
+    const getFortune = n => fortuneTable[n] || "－";
+
+    const calcFortunes = (name1, name2) => {
+      const tenkaku = lastName1 + lastName2;
+      const jinkaku = lastName2 + name1;
+      const chikaku = name1 + name2;
+      const gaikaku = tenkaku + chikaku - jinkaku;
+      const soukaku = lastName1 + lastName2 + name1 + name2;
+      const katei = getFortune(soukaku - name2);
+      const shigoto = getFortune(soukaku - lastName1);
+      const sanSai = sanSaiTable[`土${fiveElement(jinkaku)}${fiveElement(chikaku)}`] || "－";
+      return {
+        name2, tenkaku, jinkaku, chikaku, gaikaku, soukaku,
+        sanSai, katei, shigoto,
+        total: [getFortune(tenkaku), getFortune(jinkaku), getFortune(chikaku),
+                getFortune(gaikaku), getFortune(soukaku)]
+      };
+    };
+
+    const rankScore = s => s === "◎" ? 3 : s === "○" ? 2 : s === "△" ? 1 : 0;
+
+    const tbody = document.querySelector("#resultTable tbody");
+
+    const render = (data) => {
+      tbody.innerHTML = "";
+      data.forEach(d => {
+        const total = (d.total.map(rankScore).reduce((a,b)=>a+b,0)) / d.total.length;
+        const avg = total / d.total.length;
+        const tr = document.createElement("tr");
+        tr.classList.add("clickable");
+        tr.classList.add(avg >= 2.5 ? "good" : avg >= 1.5 ? "ok" : "bad");
+        tr.innerHTML = `
+          <td>${d.name2}</td>
+          <td>${d.tenkaku}</td>
+          <td>${d.jinkaku}</td>
+          <td>${d.chikaku}</td>
+          <td>${d.gaikaku}</td>
+          <td>${d.soukaku}</td>
+          <td>${d.sanSai}</td>
+          <td>${d.katei}</td>
+          <td>${d.shigoto}</td>
+          <td>${avg >= 2.5 ? "◎" : avg >= 1.5 ? "○" : "△"} ( ${total} )</td>
+        `;
+        tbody.appendChild(tr);
+        // iOS対応: click + touchend
+        const handler = () => {
+          const currentGoodness = avg;
+          document.querySelectorAll("tr.clickable").forEach(row => {
+            const isSame = row === tr;
+            if (tbody.dataset.filter === String(currentGoodness) && isSame) {
+              row.style.display = "";
+              tbody.dataset.filter = "";
+              return;
+            }
+            const val = parseFloat(row.dataset.score);
+            row.style.display = (!tbody.dataset.filter && val < currentGoodness) ? "none"
+                              : (tbody.dataset.filter && val >= currentGoodness) ? "" : row.style.display;
+          });
+          tbody.dataset.filter = tbody.dataset.filter === String(currentGoodness) ? "" : String(currentGoodness);
+        };
+        tr.dataset.score = avg;
+        tr.addEventListener("click", handler);
+        tr.addEventListener("touchend", handler);
+      });
+    };
+
+    document.getElementById("calc").addEventListener("click", () => {
+      const name1 = parseInt(document.getElementById("name1").value);
+      const max = parseInt(document.getElementById("maxName2").value);
+      if (!name1 || !max) return;
+      const results = [];
+      for (let name2 = 1; name2 <= max; name2++) {
+        results.push(calcFortunes(name1, name2));
+      }
+      render(results);
+    });
+  </script>
 </body>
 </html>
