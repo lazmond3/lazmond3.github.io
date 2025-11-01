@@ -1,11 +1,35 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+<meta charset="UTF-8">
+<title>姓名判断簡易計算ツール</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-    Hello
+<h1>姓名判断簡易計算ツール</h1>
+
+<section>
+  <h2>① 名前1・2を指定して運勢を表示</h2>
+  <label>名前1の画数: <input type="number" id="name1" min="1" max="50"></label>
+  <label>名前2の画数: <input type="number" id="name2" min="1" max="50"></label>
+  <button onclick="calcUnsei()">運勢を表示</button>
+  <div id="result1"></div>
+</section>
+
+<hr>
+
+<section>
+  <h2>② 名前1を指定し、条件を満たす名前2を探索</h2>
+  <label>名前1の画数: <input type="number" id="name1_search" min="1" max="50"></label>
+  <select id="condition">
+    <option value="allgood">全て◎</option>
+    <option value="except_workfamily">仕事運・家庭運以外が◎</option>
+    <option value="except_work">仕事運以外が◎</option>
+  </select>
+  <button onclick="searchName2()">検索</button>
+  <div id="result2"></div>
+</section>
+
+<script src="script.js"></script>
 </body>
 </html>

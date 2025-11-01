@@ -1,0 +1,5 @@
+body { font-family: sans-serif; margin: 20px; }
+label { margin-right: 10px; }
+table, th, td { border: 1px solid #999; border-collapse: collapse; padding: 4px 8px; }
+th { background: #eee; }
+hr { margin: 20px 0; }
