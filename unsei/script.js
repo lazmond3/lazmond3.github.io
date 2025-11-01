@@ -91,4 +91,66 @@ function calcUnsei(){
 // ------------------------
 
 function searchName2(){
-  const n1 = parseInt(document.getElementById("name1_search").value)_
+  const n1 = parseInt(document.getElementById("name1_search").value);
+  if(!n1){ alert("名前1を入力"); return; }
+
+  const rows = [];
+  for(let n2=1;n2<=20;n2++){
+    const {tenkaku,jinkaku,chikaku,gaikaku,soukaku} = calcKaku(n1,n2);
+    const san = calcSansai(tenkaku,jinkaku,chikaku);
+    const {family,work} = calcFamilyWork(soukaku,n1,n2);
+    const data = {
+      n2,ten:luckMap[tenkaku],jin:luckMap[jinkaku],chi:luckMap[chikaku],
+      gai:luckMap[gaikaku],sou:luckMap[soukaku],san,family,work
+    };
+    data.score = overallScore(data);
+    rows.push(data);
+  }
+
+  const sorted = rows.sort((a,b)=>b.score - a.score);
+
+  let html = `<table id="table2"><tr>
+  <th>名前2</th><th>天</th><th>人</th><th>地</th><th>外</th><th>総</th><th>三才</th><th>家</th><th>仕</th></tr>`;
+
+  for(const r of sorted){
+    const cls = r.score>=22?"good":r.score>=17?"ok":"bad";
+    html += `<tr class="${cls}" data-score="${r.score}">
+      <td>${r.n2}</td><td>${r.ten}</td><td>${r.jin}</td><td>${r.chi}</td>
+      <td>${r.gai}</td><td>${r.sou}</td><td>${r.san}</td><td>${r.family}</td><td>${r.work}</td>
+    </tr>`;
+  }
+  html += "</table>";
+  document.getElementById("result2").innerHTML = html;
+
+  const table = document.getElementById("table2");
+  let activeScore = null;
+
+  function toggleFilter(score){
+    const trs = table.querySelectorAll("tr[data-score]");
+    if(activeScore===score){
+      activeScore = null;
+      trs.forEach(tr=>tr.classList.remove("hidden"));
+    } else {
+      activeScore = score;
+      trs.forEach(tr=>{
+        const s = parseInt(tr.dataset.score);
+        if(s<score) tr.classList.add("hidden");
+        else tr.classList.remove("hidden");
+      });
+    }
+  }
+
+  // iOS Safari対応: clickとtouchstart両方監視
+  table.querySelectorAll("tr[data-score]").forEach(tr=>{
+    const handler = ()=>toggleFilter(parseInt(tr.dataset.score));
+    tr.addEventListener("click",handler);
+    tr.addEventListener("touchstart",handler);
+  });
+}
+
+// ------------------------
+
+document.getElementById("btn1").addEventListener("click",calcUnsei);
+document.getElementById("btn1").addEventListener("touchstart",calcUnsei);
+document.getElementById("btn2").addEventListener("click",searchName2);
+document.getElementById("btn2").addEventListener("touchstart",searchName2);
