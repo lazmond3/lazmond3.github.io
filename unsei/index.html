@@ -21,7 +21,7 @@
       margin: 8px 0 4px;
       font-size: 0.9rem;
     }
-    input, select, button {
+    input, button {
       width: 100%;
       padding: 8px;
       font-size: 1rem;
@@ -117,6 +117,7 @@
     };
 
     const getFortune = n => fortuneTable[n] || "－";
+    const rankScore = s => s === "◎" ? 3 : s === "○" ? 2 : s === "△" ? 1 : 0;
 
     const calcFortunes = (name1, name2) => {
       const tenkaku = lastName1 + lastName2;
@@ -127,26 +128,35 @@
       const katei = getFortune(soukaku - name2);
       const shigoto = getFortune(soukaku - lastName1);
       const sanSai = sanSaiTable[`土${fiveElement(jinkaku)}${fiveElement(chikaku)}`] || "－";
-      return {
-        name2, tenkaku, jinkaku, chikaku, gaikaku, soukaku,
-        sanSai, katei, shigoto,
-        total: [getFortune(tenkaku), getFortune(jinkaku), getFortune(chikaku),
-                getFortune(gaikaku), getFortune(soukaku)]
-      };
-    };
 
-    const rankScore = s => s === "◎" ? 3 : s === "○" ? 2 : s === "△" ? 1 : 0;
+      const results = {
+        name2,
+        tenkaku: getFortune(tenkaku),
+        jinkaku: getFortune(jinkaku),
+        chikaku: getFortune(chikaku),
+        gaikaku: getFortune(gaikaku),
+        soukaku: getFortune(soukaku),
+        sanSai,
+        katei,
+        shigoto,
+      };
+      const total = [results.tenkaku, results.jinkaku, results.chikaku, results.gaikaku, results.soukaku]
+        .map(rankScore)
+        .reduce((a,b)=>a+b,0);
+      const avg = total / 5;
+      results.totalScore = total;
+      results.totalRank = avg >= 2.5 ? "◎" : avg >= 1.5 ? "○" : "△";
+      return results;
+    };
 
     const tbody = document.querySelector("#resultTable tbody");
 
     const render = (data) => {
       tbody.innerHTML = "";
       data.forEach(d => {
-        const total = (d.total.map(rankScore).reduce((a,b)=>a+b,0)) / d.total.length;
-        const avg = total / d.total.length;
         const tr = document.createElement("tr");
         tr.classList.add("clickable");
-        tr.classList.add(avg >= 2.5 ? "good" : avg >= 1.5 ? "ok" : "bad");
+        tr.classList.add(d.totalRank === "◎" ? "good" : d.totalRank === "○" ? "ok" : "bad");
         tr.innerHTML = `
           <td>${d.name2}</td>
           <td>${d.tenkaku}</td>
@@ -157,26 +167,19 @@
           <td>${d.sanSai}</td>
           <td>${d.katei}</td>
           <td>${d.shigoto}</td>
-          <td>${avg >= 2.5 ? "◎" : avg >= 1.5 ? "○" : "△"} ( ${total} )</td>
+          <td>${d.totalRank} (${d.totalScore})</td>
         `;
         tbody.appendChild(tr);
-        // iOS対応: click + touchend
+
         const handler = () => {
-          const currentGoodness = avg;
+          const filterRank = d.totalRank;
+          const active = tbody.dataset.filter === filterRank;
+          tbody.dataset.filter = active ? "" : filterRank;
           document.querySelectorAll("tr.clickable").forEach(row => {
-            const isSame = row === tr;
-            if (tbody.dataset.filter === String(currentGoodness) && isSame) {
-              row.style.display = "";
-              tbody.dataset.filter = "";
-              return;
-            }
-            const val = parseFloat(row.dataset.score);
-            row.style.display = (!tbody.dataset.filter && val < currentGoodness) ? "none"
-                              : (tbody.dataset.filter && val >= currentGoodness) ? "" : row.style.display;
+            const val = row.children[9].textContent.trim().charAt(0);
+            row.style.display = (!tbody.dataset.filter || rankScore(val) >= rankScore(filterRank)) ? "" : "none";
           });
-          tbody.dataset.filter = tbody.dataset.filter === String(currentGoodness) ? "" : String(currentGoodness);
         };
-        tr.dataset.score = avg;
         tr.addEventListener("click", handler);
         tr.addEventListener("touchend", handler);
       });
