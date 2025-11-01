@@ -1,5 +1,24 @@
-body { font-family: sans-serif; margin: 20px; }
-label { margin-right: 10px; }
-table, th, td { border: 1px solid #999; border-collapse: collapse; padding: 4px 8px; }
-th { background: #eee; }
-hr { margin: 20px 0; }
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    margin: 12px; 
+    background: #fafafa;
+    font-size: 16px;
+  }
+  h1,h2 { text-align: center; margin-bottom: 10px; }
+  .input-group { display: flex; justify-content: space-between; margin: 8px 0; }
+  input { flex: 1; margin-left: 8px; padding: 6px; font-size: 18px; border-radius: 6px; border: 1px solid #ccc; }
+  button { width: 100%; padding: 10px; font-size: 18px; border: none; border-radius: 8px; background: #007aff; color: #fff; margin-top: 10px; }
+  button:active { background: #005bb5; }
+  
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 15px; }
+  th, td { border: 1px solid #ccc; padding: 4px 6px; text-align: center; }
+  th { background: #f2f2f2; }
+  tr.good { background: #d2f8d2; }     /* ◎ */
+  tr.ok { background: #fff6cc; }       /* ○ */
+  tr.bad { background: #ffd2d2; }      /* △ */
+  tr.hidden { display: none; }
+  
+  @media (hover:hover) {
+    tr:hover { filter: brightness(0.95); cursor: pointer; }
+  }
+  
